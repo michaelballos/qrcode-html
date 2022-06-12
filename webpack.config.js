@@ -32,6 +32,9 @@ const config = {
     ]
   },
   resolve: {
+    alias: {
+      'handlebars': 'handlebars/dist/handlebars.js',
+    },
     fallback: {
       'fs': false,
       'net': false,
