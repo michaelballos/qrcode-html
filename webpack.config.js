@@ -2,6 +2,7 @@ const webpack = require('webpack');
 const path = require('path');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const EslintWebpackPlugin = require('eslint-webpack-plugin');
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 const config = {
   entry: {
@@ -19,6 +20,7 @@ const config = {
     new webpack.ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
     new LodashModuleReplacementPlugin({}),
     new EslintWebpackPlugin({}),
+    new NodePolyfillPlugin(),
   ],
   module: {
     rules: [
@@ -30,6 +32,11 @@ const config = {
     ]
   },
   resolve: {
+    fallback: {
+      'fs': false,
+      'net': false,
+      'tls': false,
+    },
     extensions: [
       '.tsx',
       '.ts',
@@ -47,7 +54,14 @@ const config = {
         }
       }
     }
-  }
+  },
+  externals: [
+    {
+      'utf-8-validate': 'commonjs utf-8-validate',
+      bufferutil: 'commonjs bufferutil',
+    }
+  ],
+  target: 'node',
 };
 
 module.exports = config;
