@@ -3,6 +3,7 @@ const path = require('path');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const EslintWebpackPlugin = require('eslint-webpack-plugin');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
+const nodeExternals = require('webpack-node-externals');
 
 const config = {
   entry: {
@@ -58,13 +59,14 @@ const config = {
       }
     }
   },
+  target: 'node',
   externals: [
+    nodeExternals(),
     {
       'utf-8-validate': 'commonjs utf-8-validate',
       bufferutil: 'commonjs bufferutil',
     }
   ],
-  target: 'node',
 };
 
 module.exports = config;
