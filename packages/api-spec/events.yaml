@@ -1,0 +1,289 @@
+openapi: 3.0.3
+servers:
+  - url: https://qrscribe.com/api/v1
+info:
+  description: "An API for all your QR code needs"
+  version: 1.0.0
+  title: QR Scribe
+  termsOfService: https://qrscribe.com/terms/
+  contact:
+    email: support@qrscribe.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+tags:
+  - name: events
+    description: Access and configure scheduled events
+    externalDocs:
+      description: To learn more about events
+      url: https://qrscribe.com/docs/overview#events
+  - name: attendees
+    description: Access to Eventstore orders
+  - name: codes
+    description: Operations about user
+    externalDocs:
+      description: Find out more about our store
+      url: http://swagger.io
+paths:
+  /events:
+    get:
+      tags:
+        - events
+      summary: Get all events for the project environment
+      description: ""
+      operationId: getEvents
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventArray"
+  /event:
+    post:
+      tags:
+        - events
+      summary: Add a new event to the project environment
+      description: ""
+      operationId: addEvent
+      requestBody:
+        $ref: "#/components/requestBodies/Event"
+      responses:
+        "405":
+          description: Invalid input
+    put:
+      tags:
+        - events
+      summary: Update an existing event
+      description: ""
+      operationId: updateEvent
+      requestBody:
+        $ref: "#/components/requestBodies/Event"
+      responses:
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Event not found
+        "405":
+          description: Validation exception
+  "/event/{eventId}":
+    get:
+      tags:
+        - events
+      summary: Find event by ID
+      description: Returns a single event
+      operationId: getEventById
+      parameters:
+        - name: eventId
+          in: path
+          description: ID of event to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Event not found
+    post:
+      tags:
+        - events
+      summary: Updates a event in the store with form data
+      description: ""
+      operationId: updateEventWithForm
+      parameters:
+        - name: eventId
+          in: path
+          description: ID of event that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  description: Updated name of the event
+                  type: string
+                status:
+                  description: Updated status of the event
+                  type: string
+      responses:
+        "405":
+          description: Invalid input
+    delete:
+      tags:
+        - events
+      summary: Deletes a event
+      description: ""
+      operationId: deleteEvent
+      parameters:
+        - name: api_key
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: eventId
+          in: path
+          description: Event id to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Event not found
+  /registrations:
+    get:
+      tags:
+        - attendees
+      summary: Get all registrations for the project environment
+      description: ""
+      operationId: getRegistrations
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationArray"
+components:
+  parameters:
+    include:
+      in: query
+      name: include
+      description: Array of related objects that should be included in the response.
+  requestBodies:
+    EventArray:
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/Event"
+      description: List of event objects
+      required: true
+    Event:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Event"
+      description: Event object that needs to be added to the Project
+      required: true
+  schemas:
+    Node:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+    Category:
+      allOf:
+        - $ref: "#/components/schemas/Node"
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+            name:
+              type: string
+    Tag:
+      allOf:
+        - $ref: "#/components/schemas/Node"
+        - type: object
+          properties:
+            name:
+              type: string
+    QrCode:
+      allOf:
+        - $ref: "#/components/schemas/Node"
+        - type: object
+          properties:
+            forwardLink:
+              type: string
+            variant:
+              type: string
+              enum: [default, micro, rmqr, sqrc, frame]
+              description: >
+                QR code variant:
+                 * `default` - 
+                 * `micro` - 
+                 * `rmqr` - 
+                 * `sqrc` -
+                 * `frame` - 
+                 * `desc` - Descending, from Z to A
+    Event:
+      type: object
+      required:
+        - name
+        - expiresAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        category:
+          $ref: "#/components/schemas/Category"
+        name:
+          type: string
+          example: Sea Bears VS Pink Fish at Stadium 2
+        expiresAt:
+          type: string
+          example: "0/2/2000"
+        numberOfAttendees:
+          type: integer
+          example: 2903
+        status:
+          type: string
+          description: Whether the event is open for registration
+          enum:
+            - scheduled
+            - active
+    EventArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/Event"
+    Registration:
+      allOf:
+        - $ref: "#/components/schemas/Node"
+        - type: object
+          properties:
+            tickets:
+              type: array
+              items:
+                anyOf:
+                  - $ref: "#/components/schemas/QrCode"
+            registrationDetails:
+              type: object
+              additionalProperties:
+                type: string
+            metadata:
+              type: object
+              additionalProperties:
+                type: string
+    Ticket:
+      allOf:
+        - $ref: "#/components/schemas/Node"
+        - type: object
+          properties:
+            attribution:
+              type: string
+              enum: [individual, group]
+            usage:
+              type: string
+              enum: [single, multiple]

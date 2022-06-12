@@ -1,0 +1,129 @@
+openapi: 3.0.3
+servers:
+  - url: https://qrscribe.com/api/v1
+info:
+  description: "An API for all your QR code needs"
+  version: 1.0.0
+  title: QR Scribe
+  termsOfService: https://qrscribe.com/terms/
+  contact:
+    email: support@qrscribe.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+tags:
+  - name: codes
+    description: Access to codes
+paths:
+  /config:
+    get:
+      summary: Get the configuration of the project
+      description: "
+        List the current project's configured callback URLs, QR code templates, rules and more.
+      "
+  /codes:
+    get:
+      tags:
+        - codes
+      summary: Get all codes for the project environment
+      description: ""
+      operationId: getCodes
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeArray"
+components:
+  schemas:
+    Node:
+        type: object
+        properties:
+          id:
+            type: integer
+            format: int64
+          name:
+            type: string
+          created_at:
+            type: string
+            format: date-time
+          updated_at:
+            type: string
+            format: date-time
+    Project:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          properties:
+            description:
+              type: string
+            domain:
+              required: true
+              type: string
+            analyticsStrategy:
+              required: true
+              type: string
+              enum:
+                - none
+                - userAgents
+                - firstPartyCookies
+            verifierRegistration:
+              type: string
+              enum: [allatonce, onetime]
+            callbackUrls:
+              type: object
+              properties:
+                createdVerifier:
+                  type: string
+                verifierNotFound:
+                  type: string
+                validateQrCode:
+                  type: string
+    QrCode:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          properties:
+            imageUrl:
+              readOnly: true
+              type: string
+              format: url
+            scans:
+              readOnly: true
+              type: array
+              items:
+                $ref: '#/components/schemas/Scan'
+            ownerRedirect:
+              $ref: '#/components/schemas/Redirect'
+            verifierRedirect:
+              $ref: '#/components/schemas/Redirect'
+    Redirect:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          properties:
+            url:
+              type: string
+              format: url
+            canRedirectPeriod:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date-time
+                end:
+                  type: string
+                  format: date-time
+            canRedirect:
+              type: boolean
+            expired:
+              type: boolean
+    Scan:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+        properties:
+          scannedBy:
+            type: string
+            enum: [verifier, other]

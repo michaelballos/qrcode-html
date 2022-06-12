@@ -1,0 +1,38 @@
+{
+  "name": "qrscribe-monorepo",
+  "packageManager": "yarn@3.2.1",
+  "scripts": {
+    "clean": "rm dist/bundle.js",
+    "build-dev": "webpack --mode development",
+    "dev": "webpack --mode development --watch",
+    "build-prod": "webpack --mode production",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/jsonwebtoken": "^8.5.8",
+    "@typescript-eslint/eslint-plugin": "^5.27.1",
+    "@typescript-eslint/parser": "^5.27.1",
+    "eslint": "^8.17.0",
+    "eslint-webpack-plugin": "^3.1.1",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^28.1.1",
+    "lodash-webpack-plugin": "^0.11.6",
+    "prisma": "3.15.1",
+    "ts-loader": "^9.3.0",
+    "typescript": "^4.7.3",
+    "webpack": "^5.73.0",
+    "webpack-cli": "^4.9.2"
+  },
+  "dependencies": {
+    "@prisma/client": "3.15.1",
+    "bcrypt": "^5.0.1",
+    "express": "^4.18.1",
+    "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.3"
+  },
+  "resolutions": {
+    ".prisma": "link:node_modules/.prisma"
+  }
+}

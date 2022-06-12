@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:postgres@localhost:5433/qrscribe"
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  lastLoggedInAt      DateTime  @default(now())
+  lastRequestedApiAt  DateTime  @default(now())
+  lastUsedDashboardAt DateTime?
+  name                String
+  email               String    @unique
+  company             String
+  profilePicture      String?
+  timeZone            String? // e.g. "America/Los_Angeles"
+  locale              String? // e.g. "en-US"
+  passwordHash        String
+  accessToken         String?   @unique
+  projects            Project[]
+}
+
+model ProjectApiKey {
+  id                   String               @id @default(cuid())
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  lastGeneratedTokenAt DateTime?
+  lastQueriedProjectAt DateTime?
+  apiKey               String               @unique
+  envKey               String               @unique
+  projectId            String
+  project              Project              @relation(name: "ProjectApiKeyToProject", fields: [projectId], references: [id])
+  scopes               ProjectApiKeyScope[]
+}
+
+enum QrCodeErrorCorrectionLevel {
+  L
+  M
+  Q
+  H
+}
+
+enum QrDataStyle {
+  SQUARES
+  DOTS
+}
+
+model QrCode {
+  id                     String                 @id @default(cuid())
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  scans                  Scan[]                 @relation(name: "QrCodeToScans")
+  displayConfigurationId String
+  displayConfiguration   QrDisplayConfiguration @relation(name: "QrCodeToDisplayProperties", fields: [displayConfigurationId], references: [id])
+  defaultCallbackUrl     String?
+  pathExtension          String
+  projectId              String
+  project                Project                @relation(name: "QrCodeOnProject", fields: [projectId], references: [id])
+}
+
+model QrDisplayConfiguration {
+  id                     String                     @id @default(cuid())
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  errorCorrectionLevel   QrCodeErrorCorrectionLevel @default(M)
+  size                   Int                        @default(150)
+  frameSize              Int                        @default(10)
+  backgroundColor        String                     @default("#FFFFFF")
+  foregroundColor        String                     @default("#000000")
+  logoImage              String?
+  logoWidth              Int                        @default(30)
+  logoHeight             Int                        @default(30)
+  logoOpacity            Float                      @default(1)
+  removeQrCodeBehindLogo Boolean                    @default(false)
+  dataStyle              QrDataStyle                @default(SQUARES)
+  locatorCornerRadii     Json                       @default("0")
+  qrCodes                QrCode[]                   @relation(name: "QrCodeToDisplayProperties")
+}
+
+model Scan {
+  id                      String                 @id @default(cuid())
+  scannedAt               DateTime
+  userAgent               String?
+  ipAddress               String?
+  headers                 Json?
+  qrCodeId                String
+  qrCode                  QrCode                 @relation(name: "QrCodeToScans", fields: [qrCodeId], references: [id])
+  registeredCodeScannerId String?
+  registeredCodeScanner   RegisteredCodeScanner? @relation(name: "RegisteredCodeScannerToScans", fields: [registeredCodeScannerId], references: [id])
+  codeScannerTypeId       String?
+  codeScannerType         CodeScannerType?       @relation(name: "CodeScannerTypeToScans", fields: [codeScannerTypeId], references: [id])
+  successfullyRedirected  Boolean
+  redirectUrl             String?
+}
+
+enum ProjectApiKeyScope {
+  ALL
+}
+
+enum IdentifierStoreMethod {
+  LOCAL_STORAGE
+  SESSION_STORAGE
+  COOKIE
+  IP_ADDRESS
+  USER_AGENT
+  IMEI
+  ICCID
+  MULTIPLE
+}
+
+model CodeScannerType {
+  id                     String                  @id @default(cuid())
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  name                   String                  @unique
+  /// How to determine identity for the device
+  identifierStoreMethod  IdentifierStoreMethod   @default(COOKIE)
+  /// If a code scanner type is not default, navigating to this url will register the device as this code scanner type
+  inviteLink             String?
+  registeredCodeScanners RegisteredCodeScanner[] @relation(name: "CodeScannerToType")
+  isDefault              Boolean                 @default(true)
+  /// If a code scanner does not specify a callback URL for a given
+  fallbackCallbackUrl    String
+  /// maps the code scanner type to different callback URL based on the urls usage
+  callbackUrls           Json
+  projectId              String
+  project                Project                 @relation(name: "CodeScannerTypeToProject", fields: [projectId], references: [id])
+  scans                  Scan[]                  @relation(name: "CodeScannerTypeToScans")
+}
+
+model RegisteredCodeScanner {
+  id        String          @id @default(cuid())
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  typeId    String
+  type      CodeScannerType @relation(name: "CodeScannerToType", fields: [typeId], references: [id])
+  scans     Scan[]          @relation(name: "RegisteredCodeScannerToScans")
+}
+
+model Project {
+  id                   String            @id @default(cuid())
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  name                 String
+  description          String?
+  lastRequestedAt      DateTime?
+  lastGeneratedTokenAt DateTime?
+  apiKeys              ProjectApiKey[]   @relation("ProjectApiKeyToProject")
+  ownerId              String            @unique
+  owner                User              @relation(fields: [ownerId], references: [id])
+  qrCodes              QrCode[]          @relation(name: "QrCodeOnProject")
+  codeScannerTypes     CodeScannerType[] @relation(name: "CodeScannerTypeToProject")
+}
