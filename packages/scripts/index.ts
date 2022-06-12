@@ -1,3 +1,3 @@
-import { ImageWriter} from '../image-writer';
+import { ImageWriter } from '../image-writer';
 
 ImageWriter();
